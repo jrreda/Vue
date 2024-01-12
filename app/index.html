@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.5.3/css/bulma.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.6/css/all.css">
+  <link rel="stylesheet" href="../public/styles.css">
+  <title>Upvote App</title>
+</head>
+
+<body>
+  <div id="app">
+    <h2 class="title has-text-centered dividing-header">UpVote!</h2>
+
+    <div class="section">
+      <div class="section">
+        <article class="media" v-for="submission in sortedSubmissions" :key="submission.id" :class="{ 'blue-border': submission.votes >= 20 }">
+          <submission-component
+            v-bind:submission="submission"
+            v-bind:submissions="submissions"
+          ></submission-component>
+        </article>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3"></script>
+    <script src="./seed.js"></script>
+    <script src="./main.js"></script>
+</body>
+
+</html>
