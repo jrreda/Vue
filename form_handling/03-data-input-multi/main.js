@@ -5,7 +5,11 @@ const InputForm = {
                 <div class="field">
                     <label>New Item</label>
                     <input v-model="fields.newItem" type="text" placeholder="Add an item!">
+                    <span style="float: right;">{{ fields.newItem.length }}/20</span>
                     <span style="color: red;">{{ fieldErrors.newItem }}</span>
+                    <span v-if="isNewItemInputLimitExceeded" style="color: red; display: block">
+                        Must be under twenty characters
+                    </span>
                 </div>
                 <div class="field">
                     <label>Email</label>
@@ -21,6 +25,9 @@ const InputForm = {
                         <option>Urgent</option>
                     </select>
                     <span style="color: red;">{{ fieldErrors.urgency }}</span>
+                    <span v-if="isNotUrgent" style="color: red; display: block">
+                        Must be Urgent
+                    </span>
                 </div>
                 <div class="field">
                     <div class="ui checkbox">
@@ -29,7 +36,7 @@ const InputForm = {
                         <span style="color: red;">{{ fieldErrors.termsAndConditions }}</span>
                     </div>
                 </div>
-                <button class="ui button">Submit</button>
+                <button class="ui button" :disabled="isNewItemInputLimitExceeded || isNotUrgent">Submit</button>
             </form>
             <div class="ui segment" v-if="items.length > 0">
                 <h4 class="ui header">Items</h4>
@@ -83,7 +90,15 @@ const InputForm = {
             const re = /\S+@\S+\.\S+/;
             return re.test(email);
         },
-    }
+    },
+    computed: {
+        isNewItemInputLimitExceeded() {
+            return this.fields.newItem.length >= 20;
+        },
+        isNotUrgent() {
+            return this.fields.urgency === 'Nonessential';
+        },
+    },
 }
 
 Vue.createApp({
