@@ -4,7 +4,13 @@ const InputForm = {
             <form @submit="submitForm" class="ui form">
                 <div class="field">
                     <label>New Item</label>
-                    <input v-model="fields.newItem" type="text" placeholder="Add an item!" />
+                    <input 
+                        :value="newItem"
+                        @input="onInputChange"
+                        name="NEW_ITEM"
+                        type="text" 
+                        placeholder="Add an item!"
+                    >
                     <span style="float: right">{{ fields.newItem.length }}/20</span>
                     <span style="color: red">{{ fieldErrors.newItem }}</span>
                     <span v-if="isNewItemInputLimitExceeded" style="color: red; display: block">
@@ -13,12 +19,23 @@ const InputForm = {
                 </div>
                 <div class="field">
                     <label>Email</label>
-                    <input v-model="fields.email" type="text" placeholder="What's your email?" />
+                    <input 
+                        :value="email"
+                        @input="onInputChange"
+                        name="EMAIL"
+                        type="text" 
+                        placeholder="What's your email?"
+                    >
                     <span style="color: red">{{ fieldErrors.email }}</span>
                 </div>
                 <div class="field">
                     <label>Urgency</label>
-                    <select v-model="fields.urgency" class="ui fluid search dropdown">
+                    <select 
+                        :value="urgency" 
+                        @input="onInputChange"
+                        name="URGENCY"
+                        class="ui fluid search dropdown"
+                    >
                         <option disabled value="">Please select one</option>
                         <option>Nonessential</option>
                         <option>Moderate</option>
@@ -31,7 +48,12 @@ const InputForm = {
                 </div>
                 <div class="field">
                     <div class="ui checkbox">
-                        <input v-model="fields.termsAndConditions" type="checkbox" />
+                        <input 
+                            :checked="termsAndConditions"
+                            @input="onInputChange"
+                            name="TERMS_AND_CONDITIONS"
+                            type="checkbox"
+                        >
                         <label>I accept the terms and conditions</label>
                         <span style="color: red">{{ fieldErrors.termsAndConditions }}</span>
                     </div>
@@ -59,29 +81,27 @@ const InputForm = {
         </div>`,
     data() {
         return {
-            fields: {
-                newItem: '',
-                email: '',
-                urgency: '',
-                termsAndConditions: false
-            },
             fieldErrors: {
                 newItem: undefined,
                 email: undefined,
                 urgency: undefined,
                 termsAndConditions: undefined
             },
-            items: [],
             loading: false,
             saveStatus: 'READY',
         }
     },
     created() {
         this.loading = true;
-        apiClient.loadItems().then((items) => {
-            this.items = items;
+        // apiClient.loadItems().then((items) => {
+        //     this.items = items;
+        //     this.loading = false;
+        //     console.log(this.items);
+        // });
+        this.$store.dispatch('loadItems').then((response) => {
             this.loading = false;
-            console.log(this.items);
+        }).catch((error) => {
+            console.error(error);
         });
     },
     computed: {
@@ -93,28 +113,43 @@ const InputForm = {
         }
     },
     methods: {
+        onInputChange(evt) {
+            const element = evt.target;
+            const value = element.name === 'TERMS_AND_CONDITIONS' ? element.checked : element.value;
+            this.$store.commit(`UPDATE_${element.name}`, value);
+        },
         submitForm(evt) {
             evt.preventDefault();
 
-            this.fieldErrors = this.validateForm(this.fields);
+            // this.fieldErrors = this.validateForm(this.fields);
+            this.fieldErrors = this.validateForm(this.$store.state.fields);
             if (Object.keys(this.fieldErrors).length) return;
 
-            const items = [...this.items, this.fields.newItem];
+            // const items = [...this.items, this.fields.newItem];
+            const items = [...this.$store.state.items, this.$store.state.fields.newItem];
 
             this.saveStatus = 'SAVING';
-            apiClient.saveItems(items)
-                .then(() => {
-                    this.items = items;
-                    this.fields.newItem = '';
-                    this.fields.email = '';
-                    this.fields.urgency = '';
-                    this.fields.termsAndConditions = false;
-                    this.saveStatus = 'SUCCESS';
-                })
-                .catch((err) => {
-                    console.log(err);
-                    this.saveStatus = 'ERROR';
-                });
+            // apiClient.saveItems(items)
+            //     .then(() => {
+            //         this.items = items;
+            //         this.fields.newItem = '';
+            //         this.fields.email = '';
+            //         this.fields.urgency = '';
+            //         this.fields.termsAndConditions = false;
+            //         this.saveStatus = 'SUCCESS';
+            //     })
+            //     .catch((err) => {
+            //         console.log(err);
+            //         this.saveStatus = 'ERROR';
+            //     });
+            this.$store.dispatch('saveItems', items)
+            .then(() => {
+                this.saveStatus = 'SUCCESS';
+            })
+            .catch((err) => {
+                console.error(err);
+                this.saveStatus = 'ERROR';
+            });
         },
         validateForm(fields) {
             const errors = {};
@@ -138,35 +173,8 @@ const InputForm = {
     }
 }
 
-let apiClient = {
-    loadItems: function () {
-        return {
-            then: function (cb) {
-                setTimeout(() => {
-                    cb(JSON.parse(localStorage.tems || '[]'));
-                }, 1000);
-            },
-        };
-    },
-
-    saveItems: function (items) {
-        const success = !!(this.count++ % 2);
-
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                if (!success) return reject({ success });
-
-                localStorage.items = JSON.stringify(items);
-                return resolve({ success });
-            }, 1000);
-        });
-    },
-
-    count: 1,
-}
-
 Vue.createApp({
     components: {
         'input-form': InputForm
     }
-}).mount('#app')
+}).use(store).mount('#app')
